@@ -25,7 +25,6 @@ class HashTable:
         self.capacity = capacity
         self.storage = [None] * capacity
         self.entry_count = 0
-        self.head = head
 
     def get_num_slots(self):
         """
@@ -91,34 +90,33 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        # i = self.hash_index(key)
-        # self.storage[i] = value
 
+        self.int_put(key, value, self.storage)
+        load_factor = self.get_load_factor()
+
+        self.entry_count += 1
+        if load_factor > 0.7:
+            self.resize(self.capacity * 2)
+
+    def int_put(self, key, value, table):
         index = self.hash_index(key)
-        node = self.storage[index]
-
+        node = table[index]
         new_node = HashTableEntry(key, value)
 
-        if node is not None:
-            prev = None
-            while node:
-                if node.key == key:
-                    node.value == value
-                    return
-                prev = node
-                # assign the next node to the current one
-                node = node.next
-            prev.next = new_node
-            self.entry_count += 1
-            if self.get_load_factor() > 0.7:
-                self.resize(self.capacity * 2)
-        # if the node doesn't exist, generate a new one and insert it into the table
-        else:
+        # if the key of the index matches that of the new_node
+        # check if an entry already exists
+        if node == None:
+            # if not, insert (and increment entry count)
             node = new_node
-            self.entry_count += 1
 
-        if self.get_load_factor() > 0.7:
-            self.resize(self.capacity * 2)
+        # otherwise, grab the current nodes value and move it over
+        else:
+            prev_node = node
+            new_node.next = prev_node
+        # then insert new_node into the "head"
+            node = new_node
+
+        # resize if the current table is too small
 
     def delete(self, key):
         """
@@ -154,12 +152,15 @@ class HashTable:
         # Your code here
         i = self.hash_index(key)
         node = self.storage[i]
-        while node is not None:
+        if node is None:
+            return None
+        if node.key == key:
+            return node.value
+        while node.next:
+            node = node.next
             if node.key == key:
                 return node.value
-            node.value = node.next
-        else:
-            return None
+        return None
 
     def resize(self, new_capacity):
         """
@@ -169,15 +170,19 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        prev_table = self.hash_table
+        new_table = [None] * new_capacity
+        self.capacity = new_capacity
 
-        self.hash_table = [None] * new_capacity
-
-        for i in range(len(prev_table)):
-            if prev_table[i] is not None:
-                while prev_table[i]:
-                    if prev_table[i.key]:
-                        self.put(i.key, i.value)
+        for i in self.storage:
+            if i is None:
+                continue
+            # assign index to a new variable for readability
+            node = i
+            while node.next:
+                node = node.next
+                self.put(node.key, node.value)
+            self.put(i.key, i.value)
+        self.storage = new_table
 
     def pp(self):
         """
@@ -189,7 +194,7 @@ class HashTable:
               n => [{key: keyn1, value: valuen1}, {key: keyn2, value: valuen2}
           }
         """
-        for idx, node in enumerate(self.hash_table):
+        for idx, node in enumerate(self.storage):
             if node is None:
                 print(f"{idx} => []")
                 continue
@@ -219,6 +224,8 @@ if __name__ == "__main__":
     ht.put("line_12", "And stood awhile in thought.")
 
     print("")
+
+    ht.pp()
 
     # Test storing beyond capacity
     for i in range(1, 13):
