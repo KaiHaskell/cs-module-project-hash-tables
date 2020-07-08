@@ -92,29 +92,29 @@ class HashTable:
         # Your code here
 
         self.int_put(key, value, self.storage)
+        self.entry_count += 1
         load_factor = self.get_load_factor()
 
-        self.entry_count += 1
         if load_factor > 0.7:
             self.resize(self.capacity * 2)
 
     def int_put(self, key, value, table):
         index = self.hash_index(key)
-        node = table[index]
+
         new_node = HashTableEntry(key, value)
 
         # if the key of the index matches that of the new_node
         # check if an entry already exists
-        if node == None:
+        if table[index] == None:
             # if not, insert (and increment entry count)
-            node = new_node
+            table[index] = new_node
 
         # otherwise, grab the current nodes value and move it over
         else:
-            prev_node = node
+            prev_node = table[index]
             new_node.next = prev_node
         # then insert new_node into the "head"
-            node = new_node
+            table[index] = new_node
 
         # resize if the current table is too small
 
@@ -129,17 +129,13 @@ class HashTable:
         # Your code here
         index = self.hash_index(key)
         node = self.storage[index]
-        # while the node exists and the keys don't match, go through the LL
-        if node:
-            prev = None
-            while node:
-                if node.key == key:
-                    if prev:
-                        prev.next = node.next
 
-            print(f'There is nothing here!')
-        else:
-            node = None
+        while node:
+            if node.key == key and node.next:
+                self.storage[index] = node.next
+            elif node.key == key:
+                self.storage[index] = None
+            node = node.next
 
     def get(self, key):
         """
@@ -162,28 +158,6 @@ class HashTable:
                 return node.value
         return None
 
-    def resize(self, new_capacity):
-        """
-        Changes the capacity of the hash table and
-        rehashes all key/value pairs.
-
-        Implement this.
-        """
-        # Your code here
-        new_table = [None] * new_capacity
-        self.capacity = new_capacity
-
-        for i in self.storage:
-            if i is None:
-                continue
-            # assign index to a new variable for readability
-            node = i
-            while node.next:
-                node = node.next
-                self.put(node.key, node.value)
-            self.put(i.key, i.value)
-        self.storage = new_table
-
     def pp(self):
         """
         outputs the table in the following form:
@@ -205,6 +179,28 @@ class HashTable:
                 node = node.next
                 print(f"{{key: {node.key}, value: {node.value}}}", end="")
             print(f"]")
+
+    def resize(self, new_capacity):
+        """
+        Changes the capacity of the hash table and
+        rehashes all key/value pairs.
+
+        Implement this.
+        """
+        # Your code here
+        new_table = [None] * new_capacity
+        self.capacity = new_capacity
+
+        for i in self.storage:
+            if i is None:
+                continue
+            # assign index to a new variable for readability
+            node = i
+            while node.next:
+                node = node.next
+                self.int_put(node.key, node.value, new_table)
+            self.int_put(i.key, i.value, new_table)
+        self.storage = new_table
 
 
 if __name__ == "__main__":
